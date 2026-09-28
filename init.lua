@@ -109,12 +109,24 @@ vim.opt.expandtab = true
 vim.opt.shiftwidth = 2
 vim.opt.tabstop = 2
 vim.opt.softtabstop = 2
+
 vim.api.nvim_create_autocmd('FileType', {
-  pattern = { 'python', 'c', 'cpp', 'java' },
+  pattern = { 'python', 'java' },
   callback = function()
     vim.opt_local.shiftwidth = 4
     vim.opt_local.tabstop = 4
     vim.opt_local.softtabstop = 4
+  end,
+})
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = { 'c', 'cpp' },
+  callback = function()
+    vim.opt_local.shiftwidth = 4
+    vim.opt_local.tabstop = 4
+    vim.opt_local.softtabstop = 4
+    vim.opt_local.expandtab = true
+    vim.opt_local.cinoptions:append 'g0'
   end,
 })
 
@@ -183,11 +195,13 @@ vim.o.confirm = true
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 vim.keymap.set('i', 'jk', '<Esc>', { noremap = true, silent = true })
-vim.keymap.set('n', '<leader>co', '<cmd>CompilerOpen<CR>', { desc = 'Open Compiler' })
+vim.keymap.set('n', '<leader>co', '<cmd>w<cr>' .. '<cmd>CompilerOpen<CR>', { desc = 'Open Compiler' })
+
 vim.api.nvim_set_keymap(
   'n',
   '<leader>cr',
   '<cmd>CompilerStop<cr>' -- (Optional, to dispose all tasks before redo)
+    .. '<cmd>w<cr>'
     .. '<cmd>CompilerRedo<cr>',
   { noremap = true, silent = true }
 )
@@ -700,7 +714,13 @@ require('lazy').setup({
       --  - settings (table): override the default settings passed when initializing the server.
       --        for example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        clangd = {},
+        clangd = {
+          cmd = {
+            'clangd',
+            '--query-driver=/usr/bin/g++,/usr/bin/gcc',
+            '--fallback-style={BasedOnStyle: LLVM, IndentWidth: 4, UseTab: Never}',
+          },
+        },
         -- gopls = {},
         pyright = {},
         -- rust_analyzer = {},
@@ -785,7 +805,8 @@ require('lazy').setup({
         -- disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. you can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
+        -- local disable_filetypes = { c = true, cpp = true }
+        local disable_filetypes = {}
         if disable_filetypes[vim.bo[bufnr].filetype] then
           return nil
         else
@@ -1003,7 +1024,7 @@ require('lazy').setup({
   --  here are some example plugins that i've included in the kickstart repository.
   --  uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  -- require 'kickstart.plugins.debug',
+  require 'kickstart.plugins.debug',
   -- require 'kickstart.plugins.indent_line',
   require 'kickstart.plugins.lint',
   require 'kickstart.plugins.autopairs',
